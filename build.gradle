@@ -23,7 +23,7 @@ dependencies {
     compileOnly 'net.essentialsx:EssentialsX:2.19.4'
     implementation "net.kyori:adventure-text-serializer-legacy:4.11.0"
     implementation "co.aikar:acf-paper:0.5.1-SNAPSHOT"
-    implementation files("libs/ExcellentCrates-4.0.5.jar")
+    implementation files("libs/NexEngine.jar")
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
 

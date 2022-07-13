@@ -46,6 +46,7 @@ public final class EventlyCore extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        setEnabled(false);
         // nothing needs to be disabled as of 13/07/2022
         // - abbysrc
     }
