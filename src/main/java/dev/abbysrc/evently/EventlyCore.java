@@ -9,10 +9,13 @@ import dev.abbysrc.evently.hook.*;
 import dev.abbysrc.evently.listeners.PlayerListener;
 import dev.abbysrc.evently.player.EventlyPlayerManager;
 import lombok.Getter;
+import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -24,6 +27,8 @@ public final class EventlyCore extends JavaPlugin {
     private static EventlyAdminEventManager adminEventManager;
     @Getter
     private static EventlyPlayerManager playerManager;
+    @Getter
+    private static Map<String, Location> logoutLocations = new HashMap<>();
 
     private static final List<Hook> hooks = List.of(
             new LuckPermsHook(),

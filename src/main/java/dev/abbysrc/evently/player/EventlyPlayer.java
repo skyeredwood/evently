@@ -35,10 +35,17 @@ public class EventlyPlayer {
     private BukkitTask afkCheckTask;
 
     public void activity() {
+
+        if (afk) {
+            player.teleport(lastLocation);
+        }
+
+        afkCheckTask.cancel();
         afkCheckTask = new BukkitRunnable() {
             @Override
             public void run() {
                 setAfk(true);
+                setLastLocation(player.getLocation());
 
                 // Essentials API is not at all intuitive. I hate my life
                 EssentialsHook h = EventlyCore.getHook("Essentials", EssentialsHook.class);
