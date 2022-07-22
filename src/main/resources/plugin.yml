@@ -4,4 +4,11 @@ main: dev.abbysrc.evently.EventlyCore
 api-version: 1.18
 prefix: Evently
 authors: [ abbysrc ]
-depend: [ Essentials, MultiverseCore, LuckPerms, ExcellentCrates ]
+depend: [ Essentials, Multiverse-Core, LuckPerms, ExcellentCrates ]
+commands:
+  evently:
+    description: A command.
+  joinevent:
+    description: A command.
+  runevent:
+    description: A command.

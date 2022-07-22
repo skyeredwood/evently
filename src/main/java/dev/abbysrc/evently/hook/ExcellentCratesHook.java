@@ -2,10 +2,12 @@ package dev.abbysrc.evently.hook;
 
 import dev.abbysrc.evently.EventlyCore;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.logging.Logger;
 
 public class ExcellentCratesHook implements Hook {
 
@@ -27,9 +29,11 @@ public class ExcellentCratesHook implements Hook {
             CrateUser = Class.forName("su.nightexpress.excellentcrates.data.CrateUser");
             addKeys = CrateUser.getMethod("addKeys", String.class, Integer.class);
         } catch (ClassNotFoundException | NoSuchMethodException e) {
-            EventlyCore.getInstance().getLogger().severe("An issue occured while using reflection to hook into the ExcellentCrates API.");
+            Logger.getLogger("Evently").severe("An issue occured while using reflection to hook into the ExcellentCrates API.");
             e.printStackTrace();
-            EventlyCore.getInstance().onDisable();
+            if (EventlyCore.getInstance() != null) {
+                Bukkit.getPluginManager().disablePlugin(EventlyCore.getInstance());
+            }
         }
     }
 

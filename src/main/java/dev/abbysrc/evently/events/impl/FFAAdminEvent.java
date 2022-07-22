@@ -3,6 +3,7 @@ package dev.abbysrc.evently.events.impl;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.MultiverseWorld;
 import dev.abbysrc.evently.EventlyCore;
+import dev.abbysrc.evently.config.Configs;
 import dev.abbysrc.evently.events.AdminEvent;
 import dev.abbysrc.evently.hook.ExcellentCratesHook;
 import dev.abbysrc.evently.hook.MultiverseHook;
@@ -27,14 +28,15 @@ import java.util.List;
 @Getter
 public class FFAAdminEvent implements AdminEvent, Listener {
 
+    // Eventually these will be loaded from a config file
     @Getter(AccessLevel.NONE)
-    private final String WORLD_NAME = "admin";
+    private final String WORLD_NAME = Configs.outputs().main().getEvent("ffa").getWorldName();
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_X = 0;
+    private final float SPAWN_POINT_X = Configs.outputs().main().getEvent("ffa").getX();
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_Y = 80;
+    private final float SPAWN_POINT_Y = Configs.outputs().main().getEvent("ffa").getY();
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_Z = 0;
+    private final float SPAWN_POINT_Z = Configs.outputs().main().getEvent("ffa").getZ();
 
     private final Player host;
     private final Date start;
