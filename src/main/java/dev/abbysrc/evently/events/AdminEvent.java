@@ -9,11 +9,16 @@ public interface AdminEvent {
 
     void start();
     void onEnd(Player w);
+
     void addPlayer(Player p);
+    void removePlayer(Player p);
 
     Date getStart();
     String getEventName();
     Player getHost();
     List<Player> getPlayers();
+
+    boolean isDisabled();
+    void disable();
 
 }

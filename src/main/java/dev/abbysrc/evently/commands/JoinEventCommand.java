@@ -20,11 +20,15 @@ public class JoinEventCommand extends BaseCommand {
             p.sendMessage(
                     MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " <red>There are no events going on currently!</red>")
             );
-        } else {
-            EventlyCore.getAdminEventManager().getCurrentEvent().addPlayer(p);
+        } else if (EventlyCore.getAdminEventManager().getCurrentEvent().getPlayers().contains(p)) {
             p.sendMessage(
-                    MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " Joined the event!")
+                    MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " <red>You're already in this event.</red>")
             );
+        } else {
+                EventlyCore.getAdminEventManager().getCurrentEvent().addPlayer(p);
+                p.sendMessage(
+                        MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " Joined the event!")
+                );
         }
     }
 

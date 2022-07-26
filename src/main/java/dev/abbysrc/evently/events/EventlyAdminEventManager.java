@@ -3,11 +3,13 @@ package dev.abbysrc.evently.events;
 import dev.abbysrc.evently.EventlyCore;
 import dev.abbysrc.evently.util.BossBarUtil;
 import dev.abbysrc.evently.util.InviteMessageUtil;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class EventlyAdminEventManager {
 
@@ -16,27 +18,37 @@ public class EventlyAdminEventManager {
     public AdminEvent getCurrentEvent() {
         return currentAdminEvent;
     }
+    public void endCurrentEvent() {
+        currentAdminEvent = null;
+    }
 
     @SuppressWarnings("unchecked")
-    public <T extends AdminEvent> T startEvent(Player host, Class<T> event) {
+    public <T extends AdminEvent> T startEvent(Player host, Class<T> event, long timerLength) {
         try {
             currentAdminEvent = event.getDeclaredConstructor(
                     Player.class,
                     Date.class
-            ).newInstance(host, new Date(
-                    System.currentTimeMillis() + (5 * 60 * 1000)
-            ));
+            ).newInstance(host, new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(timerLength)));
 
-            // I would just use a normal integer but Runnables are annoying and Java keeps whining
-            final int[] runTimes = {0};
+            int length = (int) (timerLength * 60);
+            final int[] runTimes = { 0 };
 
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    if (runTimes[0] == 300) {
-                        currentAdminEvent.start();
+                    if (runTimes[0] == length) {
+                        if (currentAdminEvent.getPlayers().size() < 2) {
+                            currentAdminEvent.getHost().sendMessage(
+                                    MiniMessage.miniMessage().deserialize(
+                                            EventlyCore.prefix() + " <red>There aren't enough players to start!</red>"
+                                    )
+                            );
+                        } else {
+                            BossBarUtil.clear();
+                            currentAdminEvent.start();
+                        }
                         cancel();
-                    } else if (runTimes[0] == 240) {
+                    } else if (runTimes[0] == (length - 30)) {
                         runTimes[0]++;
                         InviteMessageUtil.send(currentAdminEvent);
                     } else {
@@ -48,7 +60,9 @@ public class EventlyAdminEventManager {
 
             return (T) getCurrentEvent();
         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
-            e.printStackTrace();
+            currentAdminEvent.getHost().sendMessage(
+                    MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " <red>An issue occured with the event lifecycle.</red>")
+            );
             return null;
         }
     }

@@ -9,8 +9,8 @@ public class EventlyPlayerManager {
 
     public HashMap<Player, EventlyPlayer> players = new HashMap<>();
 
-    public EventlyPlayer create(Player p) {
-        return players.put(
+    public void create(Player p) {
+        players.put(
                 p,
                 new EventlyPlayer(p)
         );

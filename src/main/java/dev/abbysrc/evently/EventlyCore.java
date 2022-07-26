@@ -32,7 +32,6 @@ public final class EventlyCore extends JavaPlugin {
 
     private static final List<Hook> hooks = List.of(
             new LuckPermsHook(),
-            new MultiverseHook(),
             new ExcellentCratesHook(),
             new EssentialsHook()
     );
@@ -98,7 +97,7 @@ public final class EventlyCore extends JavaPlugin {
      * @return the prefix
      */
     public static String prefix() {
-        return "<gradient:#bae6ff:#ecabff><bold>EVENTS</bold></gradient> •";
+        return "<gradient:#bae6ff:#ecabff><bold>Events</bold></gradient> •";
     }
 
     /**
@@ -111,9 +110,11 @@ public final class EventlyCore extends JavaPlugin {
     @SuppressWarnings("unchecked")
     public static <T extends Hook> T getHook(String key, Class<T> clazz) {
         try {
-            return (T) hooks.stream().filter(
+            List<Hook> dhk = hooks.stream().filter(
                     h -> Objects.equals(h.getPluginId(), key)
-            ).collect(Collectors.toList()).get(0);
+            ).collect(Collectors.toList());
+            if (dhk.size() == 0) return null;
+            else return (T) dhk.get(0);
         } catch (ClassCastException e) {
             return null;
         }

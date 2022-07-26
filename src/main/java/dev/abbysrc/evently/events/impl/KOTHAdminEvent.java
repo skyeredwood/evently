@@ -10,42 +10,53 @@ import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Getter
-public class FFAAdminEvent implements AdminEvent, Listener {
+public class KOTHAdminEvent implements AdminEvent, Listener {
 
     // Eventually these will be loaded from a config file
     @Getter(AccessLevel.NONE)
     private final String WORLD_NAME = "admin";
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_X = 0;
+    private final float SPAWN_POINT_X = 2;
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_Y = -60;
+    private final float SPAWN_POINT_Y = -53;
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_Z = 0;
+    private final float SPAWN_POINT_Z = 53;
+    @Getter(AccessLevel.NONE)
+    private final Location KOTH_POINT = new Location(
+            Bukkit.getWorld("admin"),
+            2,
+            -53,
+            53
+    );
 
     private final Player host;
     private final Date start;
     private final List<Player> players = new ArrayList<>();
-    private final List<Player> eliminated = new ArrayList<>();
+
+    private BukkitTask lifecycleTask;
+    private BukkitTask forceEndTask;
+
+    private final Map<Player, Integer> points = new HashMap<>();
 
     private boolean disabled = false;
 
-    public FFAAdminEvent(Player h, Date s) {
+    public KOTHAdminEvent(Player h, Date s) {
         Bukkit.getPluginManager().registerEvents(this, EventlyCore.getInstance());
 
         host = h;
@@ -55,6 +66,53 @@ public class FFAAdminEvent implements AdminEvent, Listener {
 
     @Override
     public void start() {
+
+        forceEndTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                var stats = new Object() {
+                    Player heighest = null;
+                    int heighestPoints = -1;
+                };
+
+                points.entrySet().forEach(s -> {
+                    if (stats.heighest == null) {
+                        stats.heighest = s.getKey();
+                    }
+                    if (stats.heighestPoints == -1) {
+                        stats.heighestPoints = s.getValue();
+                    }
+
+                    if (s.getValue() > stats.heighestPoints) {
+                        stats.heighest = s.getKey();
+                        stats.heighestPoints = s.getValue();
+                    }
+                });
+
+                onEnd(stats.heighest);
+            }
+        }.runTaskLater(EventlyCore.getInstance(), 20 * 60 * 2);
+
+        lifecycleTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (Player p : getPlayers()) {
+                    Location l = p.getLocation();
+                    if (l.getBlockX() == KOTH_POINT.getBlockX()
+                            && l.getBlockY() == KOTH_POINT.getBlockY()
+                            && l.getBlockZ() == KOTH_POINT.getBlockZ()) {
+                        p.playSound(
+                            KOTH_POINT,
+                            Sound.BLOCK_NOTE_BLOCK_BIT,
+                            1.2f,
+                            1.1f
+                        );
+                        points.replace(p, points.get(p) + 1);
+                    }
+                }
+            }
+        }.runTaskTimer(EventlyCore.getInstance(), 0, 20);
+
         try {
             for (Player p : players) {
                 EventlyCore.getPlayerManager().get(p).setLastLocation(p.getLocation());
@@ -69,21 +127,16 @@ public class FFAAdminEvent implements AdminEvent, Listener {
 
                 p.getInventory().clear();
 
-                EntityEquipment equ = p.getEquipment();
-                equ.setHelmet(new ItemStack(Material.LEATHER_HELMET));
-                equ.setChestplate(new ItemStack(Material.LEATHER_CHESTPLATE));
-                equ.setLeggings(new ItemStack(Material.LEATHER_LEGGINGS));
-                equ.setBoots(new ItemStack(Material.LEATHER_BOOTS));
+                ItemStack kbStick = new ItemStack(Material.STICK);
+                kbStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 5);
 
-                p.getInventory().addItem(
-                    new ItemStack(Material.STONE_SWORD),
-                    new ItemStack(Material.BOW),
-                    new ItemStack(Material.ARROW, 5)
-                );
+                p.getInventory().addItem(kbStick);
+
+                points.put(p, 0);
 
                 p.sendMessage(
                         MiniMessage.miniMessage().deserialize(
-                                EventlyCore.prefix() + " Welcome to FFA: the aim is to survive, and the last player alive wins. Good luck!"
+                                EventlyCore.prefix() + " Welcome to KOTH: stay on the top of the hill the longest to win the game. Good luck!"
                         )
                 );
             }
@@ -92,40 +145,6 @@ public class FFAAdminEvent implements AdminEvent, Listener {
             getPlayers().forEach(p -> p.sendMessage(
                     MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " <red>An issue occured teleporting players into the game!</red>")
             ));
-        }
-    }
-
-    @EventHandler
-    public void onDeath(PlayerDeathEvent e) {
-
-        Player p = e.getPlayer();
-
-        if (!disabled && players.contains(p)) {
-            e.deathMessage(Component.empty());
-            players.forEach(pl -> pl.sendMessage(
-                    MiniMessage.miniMessage().deserialize(
-                            EventlyCore.prefix() + " " + p.getName() + " has been eliminated."
-                    )
-            ));
-
-            eliminated.add(e.getPlayer());
-
-            if (eliminated.size() == (players.size() - 1)) {
-                for (Player pl : players) {
-                    if (!eliminated.contains(pl)) {
-                        onEnd(pl);
-                    }
-                }
-            }
-
-            p.setGameMode(GameMode.SURVIVAL);
-            p.getInventory().clear();
-
-            EventlyPlayer ep = EventlyCore.getPlayerManager().get(p);
-            p.teleport(ep.getLastLocation());
-            ep.setLastLocation(null);
-
-
         }
     }
 
@@ -141,18 +160,14 @@ public class FFAAdminEvent implements AdminEvent, Listener {
             EventlyPlayer ep = EventlyCore.getPlayerManager().get(p);
             if (p == w) {
                 Bukkit.dispatchCommand(w, "spawn");
-            } else p.teleport(
-                    ep.getLastLocation() == null
-                            ? new Location(Bukkit.getWorld("admin"), 0, -60,0)
-                            : ep.getLastLocation()
-            );
+            } else p.teleport(ep.getLastLocation());
             ep.setLastLocation(null);
 
             SavedInventory.get(p).apply(p);
 
             p.sendMessage(
                     MiniMessage.miniMessage().deserialize(
-                            EventlyCore.prefix() + " The winner is " + w.getName() + " - congratulations!"
+                            EventlyCore.prefix() + " " + w.getName() + " is the King of the Hill with " + points.get(w) + " points - congratulations!"
                     )
             );
         }
@@ -183,7 +198,7 @@ public class FFAAdminEvent implements AdminEvent, Listener {
 
     @Override
     public String getEventName() {
-        return "FFA";
+        return "KOTH";
     }
 
     @Override
@@ -200,6 +215,7 @@ public class FFAAdminEvent implements AdminEvent, Listener {
     public List<Player> getPlayers() {
         return players;
     }
+
 
     @Override
     public boolean isDisabled() {
