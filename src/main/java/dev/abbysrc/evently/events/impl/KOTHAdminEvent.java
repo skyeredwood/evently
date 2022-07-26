@@ -1,6 +1,7 @@
 package dev.abbysrc.evently.events.impl;
 
 import dev.abbysrc.evently.EventlyCore;
+import dev.abbysrc.evently.config.Config;
 import dev.abbysrc.evently.events.AdminEvent;
 import dev.abbysrc.evently.hook.ExcellentCratesHook;
 import dev.abbysrc.evently.player.EventlyPlayer;
@@ -10,39 +11,35 @@ import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Getter
 public class KOTHAdminEvent implements AdminEvent, Listener {
 
     // Eventually these will be loaded from a config file
     @Getter(AccessLevel.NONE)
-    private final String WORLD_NAME = "admin";
+    private final String WORLD_NAME = EventlyCore.getConfiguration().getTable("config.event_koth").getString("world");
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_X = 2;
+    private final double SPAWN_POINT_X = EventlyCore.getConfiguration().getTable("config.event_koth").getDouble("x");
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_Y = -53;
+    private final double SPAWN_POINT_Y = EventlyCore.getConfiguration().getTable("config.event_koth").getDouble("y");
     @Getter(AccessLevel.NONE)
-    private final float SPAWN_POINT_Z = 53;
+    private final double SPAWN_POINT_Z = EventlyCore.getConfiguration().getTable("config.event_koth").getDouble("z");
     @Getter(AccessLevel.NONE)
     private final Location KOTH_POINT = new Location(
-            Bukkit.getWorld("admin"),
-            2,
-            -53,
-            53
+            Bukkit.getWorld(WORLD_NAME),
+            SPAWN_POINT_X,
+            SPAWN_POINT_Y,
+            SPAWN_POINT_Z
     );
 
     private final Player host;
@@ -54,7 +51,7 @@ public class KOTHAdminEvent implements AdminEvent, Listener {
 
     private final Map<Player, Integer> points = new HashMap<>();
 
-    private boolean disabled = false;
+    private State state = State.WAITING;
 
     public KOTHAdminEvent(Player h, Date s) {
         Bukkit.getPluginManager().registerEvents(this, EventlyCore.getInstance());
@@ -66,6 +63,8 @@ public class KOTHAdminEvent implements AdminEvent, Listener {
 
     @Override
     public void start() {
+
+        state = State.ACTIVE;
 
         forceEndTask = new BukkitRunnable() {
             @Override
@@ -128,22 +127,22 @@ public class KOTHAdminEvent implements AdminEvent, Listener {
                 p.getInventory().clear();
 
                 ItemStack kbStick = new ItemStack(Material.STICK);
-                kbStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 5);
+                kbStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 2);
 
                 p.getInventory().addItem(kbStick);
 
                 points.put(p, 0);
 
                 p.sendMessage(
-                        MiniMessage.miniMessage().deserialize(
-                                EventlyCore.prefix() + " Welcome to KOTH: stay on the top of the hill the longest to win the game. Good luck!"
-                        )
+                        lang().getWithLegacyCodes("welcome")
                 );
             }
 
         } catch (NullPointerException e) {
             getPlayers().forEach(p -> p.sendMessage(
-                    MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " <red>An issue occured teleporting players into the game!</red>")
+                LegacyComponentSerializer.legacyAmpersand().deserialize(
+                    Config.lang().generics().get("event_lifecycle_error")
+                )
             ));
         }
     }
@@ -167,33 +166,13 @@ public class KOTHAdminEvent implements AdminEvent, Listener {
 
             p.sendMessage(
                     MiniMessage.miniMessage().deserialize(
-                            EventlyCore.prefix() + " " + w.getName() + " is the King of the Hill with " + points.get(w) + " points - congratulations!"
+                            lang().get("winner"), Placeholder.component("player", Component.text(w.getName()))
                     )
             );
         }
 
         EventlyCore.getAdminEventManager().endCurrentEvent();
-        disable();
-    }
-
-    @Override
-    public void addPlayer(Player p) {
-        players.add(p);
-        host.sendMessage(
-            MiniMessage.miniMessage().deserialize(
-                EventlyCore.prefix() + " <player> joined the event.", Placeholder.component("player", Component.text(p.getName()))
-            )
-        );
-    }
-
-    @Override
-    public void removePlayer(Player p) {
-        players.remove(p);
-        host.sendMessage(
-                MiniMessage.miniMessage().deserialize(
-                        EventlyCore.prefix() + " <player> left the event.", Placeholder.component("player", Component.text(p.getName()))
-                )
-        );
+        setState(State.ENDED);
     }
 
     @Override
@@ -216,15 +195,9 @@ public class KOTHAdminEvent implements AdminEvent, Listener {
         return players;
     }
 
-
     @Override
-    public boolean isDisabled() {
-        return disabled;
-    }
-
-    @Override
-    public void disable() {
-        disabled = true;
+    public void setState(State s) {
+        state = s;
     }
 
 }

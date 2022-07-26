@@ -1,0 +1,90 @@
+#
+#   ________________   _______________ __________________.____    _____.___.
+#   \_   _____/\   \ /   /\_   _____/ \      \__    ___/|    |   \__  |   |
+#    |    __)_  \   Y   /  |    __)_  /   |   \|    |   |    |    /   |   |
+#    |        \  \     /   |        \/    |    \    |   |    |___ \____   |
+#   /_______  /   \___/   /_______  /\____|__  /____|   |_______ \/ ______|
+#           \/                    \/         \/                 \/\/
+#
+#   (c) 2022 by Abigail Redwood.
+#
+#   Yes, I use TOML. If you want to complain go yell at the guy who created TOML in the first place.
+#   NOTE: Any items with placeholders MUST use MiniMessage in their formatting otherwise the code will not parse them.
+#
+
+[config]
+    crate_name = "admin"
+
+    [config.event_ffa]
+        world = "admin"
+        x = 0
+        y = -60
+        z = 0
+
+    [config.event_koth]
+        world = "admin"
+        x = 2
+        y = -53
+        z = 53
+
+    [config.event_race]
+        world = "admin"
+        x = 0
+        y = -60
+        z = 0
+        # Due to compatibility issues, stage coordinates are not ocnfigurable. Contact Abby to get them changed in the plugin.
+
+[lang]
+    [[lang.command]]
+        name = "joinevent"
+        no_joinable_events = "&cThere are no joinable events!"
+        already_in_event = "&cYou're already in this event!"
+        joined_event = "&aJoined the event!"
+
+    [[lang.command]]
+        name = "runevent"
+        issue_occured = "&cAn issue occured while starting that event."
+        started_ffa = "&aStarted a FFA event!"
+        started_koth = "&aStarted a KOTH event!"
+        started_race = "&aStarted a Race event! &eRace is still in BETA so some bugs may occur."
+        invalid_type = "&cThat isn't an event!"
+
+    [[lang.command]]
+        name = "evently"
+        message = "&9no bitches? &8(plugin developed by abbysrc)"
+
+    [lang.generic]
+        command_missing_arguments = "&cMissing arguments!"
+        # Requires MiniMessage
+        event_joined = "<green><player> joined the event."
+        # Requires MiniMessage
+        event_left = "<red><player> joined the event."
+        event_teleport_error = "&cAn error occured teleporting players into the game."
+        event_lifecycle_error = "&cAn error occured with the admin event lifecycle."
+        event_not_enough_players = "&cThere aren't enough players to start! Events need 2 or more players to be started."
+        event_crate = "&6Congratulations on winning! Your prize crate should be in your inventory."
+
+    [[lang.event]]
+        # Don't change this
+        name = "FFA"
+        welcome = "&9Welcome to FFA: the aim is to survive, and the last player alive wins. Good luck!"
+        # Requires MiniMessage
+        elimination = "<red><player> has been eliminated!"
+        # Requires MiniMessage
+        winner = "<gold><player> fought hard and came out on top!"
+
+    [[lang.event]]
+        # Don't change this
+        name = "KOTH"
+        welcome = "&dWelcome to King of the Hill: stay on the top of the hill the longest to win the game. Good luck!"
+        # Requires MiniMessage
+        winner = "&6<player> is the true King of the Hill!"
+
+    [[lang.event]]
+        # Don't change this
+        name = "Race"
+        welcome = "&eWelcome to Race: hurry through Nebula's spawnpoints, past and present, to win the race. Get set, go!"
+        # Requires MiniMessage
+        checkpoint = "<yellow><player> completed stage <stage>."
+        # Requires MiniMessage
+        winner = "<gold><player> ran like the wind and took the crown!"

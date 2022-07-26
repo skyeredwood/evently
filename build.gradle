@@ -20,6 +20,7 @@ dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT'
     compileOnly 'net.essentialsx:EssentialsX:2.19.4'
     implementation "net.kyori:adventure-text-serializer-legacy:4.11.0"
+    implementation 'com.moandjiezana.toml:toml4j:0.7.2'
     implementation "co.aikar:acf-paper:0.5.1-SNAPSHOT"
     implementation 'org.reflections:reflections:0.9.9-RC1'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'

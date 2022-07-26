@@ -3,6 +3,7 @@ package dev.abbysrc.evently;
 import co.aikar.commands.PaperCommandManager;
 import dev.abbysrc.evently.commands.JoinEventCommand;
 import dev.abbysrc.evently.commands.RunEventCommand;
+import dev.abbysrc.evently.config.Config;
 import dev.abbysrc.evently.events.EventlyAdminEventManager;
 import dev.abbysrc.evently.commands.EventlyCommand;
 import dev.abbysrc.evently.hook.*;
@@ -36,12 +37,17 @@ public final class EventlyCore extends JavaPlugin {
             new EssentialsHook()
     );
 
+    @Getter
+    private static Config configuration;
+
     @Override
     public void onEnable() {
         instance = this;
 
         adminEventManager = new EventlyAdminEventManager();
         playerManager = new EventlyPlayerManager();
+
+        configuration = new Config();
 
         registerHooks();
         registerCommands();
@@ -80,9 +86,9 @@ public final class EventlyCore extends JavaPlugin {
      */
     private void registerCommands() {
         PaperCommandManager commandManager = new PaperCommandManager(this);
-        commandManager.registerCommand(new EventlyCommand());
-        commandManager.registerCommand(new JoinEventCommand());
-        commandManager.registerCommand(new RunEventCommand());
+        commandManager.registerCommand(new EventlyCommand("evently"));
+        commandManager.registerCommand(new JoinEventCommand("joinevent"));
+        commandManager.registerCommand(new RunEventCommand("runevent"));
     }
 
     /**

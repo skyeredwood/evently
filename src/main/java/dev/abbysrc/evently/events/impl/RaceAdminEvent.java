@@ -1,6 +1,7 @@
 package dev.abbysrc.evently.events.impl;
 
 import dev.abbysrc.evently.EventlyCore;
+import dev.abbysrc.evently.config.Config;
 import dev.abbysrc.evently.events.AdminEvent;
 import dev.abbysrc.evently.hook.ExcellentCratesHook;
 import dev.abbysrc.evently.player.EventlyPlayer;
@@ -21,7 +22,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.*;
 
 @Getter
-public class SpawnRaceAdminEvent implements AdminEvent, Listener {
+public class RaceAdminEvent implements AdminEvent, Listener {
 
     // Eventually these will be loaded from a config file
     @Getter(AccessLevel.NONE)
@@ -56,11 +57,10 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
 
     private final Map<Player, Integer> stages = new HashMap<>();
 
-    private boolean disabled = false;
+    private State state = State.WAITING;
 
-    public SpawnRaceAdminEvent(Player h, Date s) {
+    public RaceAdminEvent(Player h, Date s) {
         Bukkit.getPluginManager().registerEvents(this, EventlyCore.getInstance());
-
         host = h;
         start = s;
         players.add(h);
@@ -69,7 +69,7 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
     @Override
     public void start() {
         try {
-
+            setState(State.ACTIVE);
             lifecycleTask = new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -87,17 +87,15 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
 
                             for (int i = 0; i == sections; i++) {
                                 p.getWorld().spawnParticle(
-                                        Particle.DUST_COLOR_TRANSITION
-                                                .builder()
-                                                .color(Color.GREEN)
-                                                .particle(),
+                                        Particle.REDSTONE,
                                         new Location(
                                                 Bukkit.getWorld(WORLD_NAME),
                                                 sectionX * i + 1,
                                                 sectionY * i + 1,
                                                 sectionZ * i + 1
                                         ),
-                                        1
+                                        1,
+                                        new Particle.DustOptions(Color.fromBGR(133, 232, 29), 1)
                                 );
                             }
                         } else if (stage == 1) {
@@ -112,17 +110,15 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
 
                             for (int i = 0; i == sections; i++) {
                                 p.getWorld().spawnParticle(
-                                        Particle.DUST_COLOR_TRANSITION
-                                                .builder()
-                                                .color(Color.GREEN)
-                                                .particle(),
+                                        Particle.REDSTONE,
                                         new Location(
                                                 Bukkit.getWorld(WORLD_NAME),
                                                 sectionX * i + 1,
                                                 sectionY * i + 1,
                                                 sectionZ * i + 1
                                         ),
-                                        1
+                                        1,
+                                        new Particle.DustOptions(Color.fromBGR(133, 232, 29), 1)
                                 );
                             }
                         } else if (stage == 2) {
@@ -138,17 +134,15 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
 
                             for (int i = 0; i == sections; i++) {
                                 p.getWorld().spawnParticle(
-                                        Particle.DUST_COLOR_TRANSITION
-                                                .builder()
-                                                .color(Color.GREEN)
-                                                .particle(),
+                                        Particle.REDSTONE,
                                         new Location(
                                                 Bukkit.getWorld(WORLD_NAME),
                                                 sectionX * i + 1,
                                                 sectionY * i + 1,
                                                 sectionZ * i + 1
                                         ),
-                                        1
+                                        1,
+                                        new Particle.DustOptions(Color.fromBGR(133, 232, 29), 1)
                                 );
                             }
                         }
@@ -170,23 +164,19 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
                 p.getInventory().clear();
 
                 p.sendMessage(
-                        MiniMessage.miniMessage().deserialize(
-                                EventlyCore.prefix() + " Welcome to Spawn Race: hurry through Nebula's spawnpoints, past and present, to win the race. Get running!"
-                        )
+                    lang().getWithLegacyCodes("welcome")
                 );
 
-                p.sendMessage(
-                        MiniMessage.miniMessage().deserialize(
-                                EventlyCore.prefix() + " Follow the particles to reach the next checkpoint."
-                        )
-                );
+                p.sendMessage(MiniMessage.miniMessage().deserialize(
+                "<yellow>Follow the particles to reach the next checkpoint."
+                ));
 
                 stages.put(p, 0);
             }
 
         } catch (NullPointerException e) {
             getPlayers().forEach(p -> p.sendMessage(
-                    MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " <red>An issue occured teleporting players into the game!</red>")
+                    Config.lang().generics().get("event_teleport_error")
             ));
         }
     }
@@ -196,14 +186,14 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
 
         Player p = e.getPlayer();
 
-        if (!disabled && players.contains(p)) {
+        if (getState() == State.ACTIVE && players.contains(p)) {
             Location l = e.getTo();
             if (l.getBlockX() == CP_V1.getBlockX() &&
                     l.getBlockY() == CP_V1.getBlockY() &&
                     l.getBlockZ() == CP_V1.getBlockZ()) {
                 players.forEach(pl -> pl.sendMessage(
                         MiniMessage.miniMessage().deserialize(
-                                EventlyCore.prefix() + " " + p.getName() + " has reached Checkpoint #1!"
+                                "<dark_green>" + p.getName() + " has reached Checkpoint #1!</dark_green>"
                         )
                 ));
                 stages.replace(p, 1);
@@ -212,18 +202,12 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
                     l.getBlockZ() == CP_V2_1.getBlockZ()) {
                 players.forEach(pl -> pl.sendMessage(
                         MiniMessage.miniMessage().deserialize(
-                                EventlyCore.prefix() + " " + p.getName() + " has reached Checkpoint #2!"
+                                "<green>" + p.getName() + " has reached Checkpoint #2!</gold>"
                         )
                 ));
                 stages.replace(p, 2);
             } else if (l.getBlockX() == CP_V2_2.getBlockX() &&
-                    l.getBlockY() == CP_V2_2.getBlockY() &&
                     l.getBlockZ() == CP_V2_2.getBlockZ()) {
-                players.forEach(pl -> pl.sendMessage(
-                        MiniMessage.miniMessage().deserialize(
-                                EventlyCore.prefix() + " <green>" + p.getName() + " has won the race!</green>"
-                        )
-                ));
                 onEnd(p);
             }
         }
@@ -252,38 +236,18 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
 
             p.sendMessage(
                     MiniMessage.miniMessage().deserialize(
-                            EventlyCore.prefix() + " " + w.getName() + " went turbo mode and came out victorious - congratulations!"
+                            lang().get("winner"), Placeholder.component("player", Component.text(w.getName()))
                     )
             );
         }
 
         EventlyCore.getAdminEventManager().endCurrentEvent();
-        disable();
-    }
-
-    @Override
-    public void addPlayer(Player p) {
-        players.add(p);
-        host.sendMessage(
-            MiniMessage.miniMessage().deserialize(
-                EventlyCore.prefix() + " <player> joined the event.", Placeholder.component("player", Component.text(p.getName()))
-            )
-        );
-    }
-
-    @Override
-    public void removePlayer(Player p) {
-        players.remove(p);
-        host.sendMessage(
-                MiniMessage.miniMessage().deserialize(
-                        EventlyCore.prefix() + " <player> left the event.", Placeholder.component("player", Component.text(p.getName()))
-                )
-        );
+        setState(State.ENDED);
     }
 
     @Override
     public String getEventName() {
-        return "Spawn Race";
+        return "Race";
     }
 
     @Override
@@ -302,13 +266,8 @@ public class SpawnRaceAdminEvent implements AdminEvent, Listener {
     }
 
     @Override
-    public boolean isDisabled() {
-        return disabled;
-    }
-
-    @Override
-    public void disable() {
-        disabled = true;
+    public void setState(State s) {
+        state = s;
     }
 
 }

@@ -1,9 +1,10 @@
 package dev.abbysrc.evently.events;
 
 import dev.abbysrc.evently.EventlyCore;
+import dev.abbysrc.evently.config.Config;
 import dev.abbysrc.evently.util.BossBarUtil;
 import dev.abbysrc.evently.util.InviteMessageUtil;
-import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -39,9 +40,9 @@ public class EventlyAdminEventManager {
                     if (runTimes[0] == length) {
                         if (currentAdminEvent.getPlayers().size() < 2) {
                             currentAdminEvent.getHost().sendMessage(
-                                    MiniMessage.miniMessage().deserialize(
-                                            EventlyCore.prefix() + " <red>There aren't enough players to start!</red>"
-                                    )
+                                LegacyComponentSerializer.legacyAmpersand().deserialize(
+                                    Config.lang().generics().get("event_not_enough_players")
+                                )
                             );
                         } else {
                             BossBarUtil.clear();
@@ -51,6 +52,7 @@ public class EventlyAdminEventManager {
                     } else if (runTimes[0] == (length - 30)) {
                         runTimes[0]++;
                         InviteMessageUtil.send(currentAdminEvent);
+                        currentAdminEvent.setState(AdminEvent.State.QUEUEING);
                     } else {
                         runTimes[0]++;
                         BossBarUtil.update(currentAdminEvent);
@@ -61,7 +63,9 @@ public class EventlyAdminEventManager {
             return (T) getCurrentEvent();
         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
             currentAdminEvent.getHost().sendMessage(
-                    MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " <red>An issue occured with the event lifecycle.</red>")
+                LegacyComponentSerializer.legacyAmpersand().deserialize(
+                    Config.lang().generics().get("event_lifecycle_error")
+                )
             );
             return null;
         }

@@ -1,6 +1,7 @@
 package dev.abbysrc.evently.events.impl;
 
 import dev.abbysrc.evently.EventlyCore;
+import dev.abbysrc.evently.config.Config;
 import dev.abbysrc.evently.events.AdminEvent;
 import dev.abbysrc.evently.hook.ExcellentCratesHook;
 import dev.abbysrc.evently.player.EventlyPlayer;
@@ -10,6 +11,7 @@ import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -43,11 +45,10 @@ public class FFAAdminEvent implements AdminEvent, Listener {
     private final List<Player> players = new ArrayList<>();
     private final List<Player> eliminated = new ArrayList<>();
 
-    private boolean disabled = false;
+    private State state = State.WAITING;
 
     public FFAAdminEvent(Player h, Date s) {
         Bukkit.getPluginManager().registerEvents(this, EventlyCore.getInstance());
-
         host = h;
         start = s;
         players.add(h);
@@ -56,6 +57,7 @@ public class FFAAdminEvent implements AdminEvent, Listener {
     @Override
     public void start() {
         try {
+            state = State.ACTIVE;
             for (Player p : players) {
                 EventlyCore.getPlayerManager().get(p).setLastLocation(p.getLocation());
                 SavedInventory.save(p);
@@ -82,15 +84,15 @@ public class FFAAdminEvent implements AdminEvent, Listener {
                 );
 
                 p.sendMessage(
-                        MiniMessage.miniMessage().deserialize(
-                                EventlyCore.prefix() + " Welcome to FFA: the aim is to survive, and the last player alive wins. Good luck!"
-                        )
+                    lang().getWithLegacyCodes("welcome")
                 );
             }
 
         } catch (NullPointerException e) {
             getPlayers().forEach(p -> p.sendMessage(
-                    MiniMessage.miniMessage().deserialize(EventlyCore.prefix() + " <red>An issue occured teleporting players into the game!</red>")
+                LegacyComponentSerializer.legacyAmpersand().deserialize(
+                        Config.lang().generics().get("event_lifecycle_error")
+                )
             ));
         }
     }
@@ -100,12 +102,10 @@ public class FFAAdminEvent implements AdminEvent, Listener {
 
         Player p = e.getPlayer();
 
-        if (!disabled && players.contains(p)) {
+        if (getState() == State.ACTIVE && players.contains(p)) {
             e.deathMessage(Component.empty());
             players.forEach(pl -> pl.sendMessage(
-                    MiniMessage.miniMessage().deserialize(
-                            EventlyCore.prefix() + " " + p.getName() + " has been eliminated."
-                    )
+                    lang().getWithLegacyCodes("elimination")
             ));
 
             eliminated.add(e.getPlayer());
@@ -152,33 +152,13 @@ public class FFAAdminEvent implements AdminEvent, Listener {
 
             p.sendMessage(
                     MiniMessage.miniMessage().deserialize(
-                            EventlyCore.prefix() + " The winner is " + w.getName() + " - congratulations!"
+                            lang().get("winner"), Placeholder.component("player", Component.text(w.getName()))
                     )
             );
         }
 
         EventlyCore.getAdminEventManager().endCurrentEvent();
-        disable();
-    }
-
-    @Override
-    public void addPlayer(Player p) {
-        players.add(p);
-        host.sendMessage(
-            MiniMessage.miniMessage().deserialize(
-                EventlyCore.prefix() + " <player> joined the event.", Placeholder.component("player", Component.text(p.getName()))
-            )
-        );
-    }
-
-    @Override
-    public void removePlayer(Player p) {
-        players.remove(p);
-        host.sendMessage(
-                MiniMessage.miniMessage().deserialize(
-                        EventlyCore.prefix() + " <player> left the event.", Placeholder.component("player", Component.text(p.getName()))
-                )
-        );
+        setState(State.ENDED);
     }
 
     @Override
@@ -202,13 +182,8 @@ public class FFAAdminEvent implements AdminEvent, Listener {
     }
 
     @Override
-    public boolean isDisabled() {
-        return disabled;
-    }
-
-    @Override
-    public void disable() {
-        disabled = true;
+    public void setState(State s) {
+        state = s;
     }
 
 }
