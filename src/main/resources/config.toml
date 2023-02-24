@@ -32,7 +32,7 @@
         x = 0
         y = -60
         z = 0
-        # Due to compatibility issues, stage coordinates are not ocnfigurable. Contact Abby to get them changed in the plugin.
+        # Due to compatibility issues, stage coordinates are not configurable. I left the project before this could be changed.
 
 [lang]
     [[lang.command]]
