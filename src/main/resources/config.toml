@@ -6,7 +6,7 @@
 #   /_______  /   \___/   /_______  /\____|__  /____|   |_______ \/ ______|
 #           \/                    \/         \/                 \/\/
 #
-#   (c) 2022 by Abigail Redwood.
+#   (c) 2022 by Skylar Redwood.
 #
 #   Yes, I use TOML. If you want to complain go yell at the guy who created TOML in the first place.
 #   NOTE: Any items with placeholders MUST use MiniMessage in their formatting otherwise the code will not parse them.
