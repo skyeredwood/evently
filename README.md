@@ -1,3 +1,6 @@
+> [!WARNING]  
+> This code is really old, and really bad. It worked well at the time but is now over a year out of date.
+ 
 # Evently
 A Mineclub-style admin event system I created for a Minecraft server I used to work at called NebulaMC. Now disused, so I've open-sourced it lest anyone wants to use it.
 
